@@ -51,12 +51,10 @@ TCPStream* TCPConnector::connect(const char* server, int port, int timeout)
     socklen_t len;
     int result = -1, valopt, sd = socket(AF_INET, SOCK_STREAM, 0);
     
-    // Set socket to non-blocking
     arg = fcntl(sd, F_GETFL, NULL);
     arg |= O_NONBLOCK;
     fcntl(sd, F_SETFL, arg);
     
-    // Connect with time limit
     string message;
     if ((result = ::connect(sd, (struct sockaddr *)&address, sizeof(address))) < 0)
     {
@@ -73,7 +71,6 @@ TCPStream* TCPConnector::connect(const char* server, int port, int timeout)
                 if (valopt) {
                     fprintf(stderr, "connect() error %d - %s\n", valopt, strerror(valopt));
                 }
-                // connection established
                 else result = 0;
             }
             else fprintf(stderr, "connect() timed out\n");
@@ -81,12 +78,10 @@ TCPStream* TCPConnector::connect(const char* server, int port, int timeout)
         else fprintf(stderr, "connect() error %d - %s\n", errno, strerror(errno));
     }
     
-    // Return socket to blocking mode
     arg = fcntl(sd, F_GETFL, NULL);
     arg &= (~O_NONBLOCK);
     fcntl(sd, F_SETFL, arg);
     
-    // Create stream object if connected
     if (result == -1) return NULL;
     return new TCPStream(sd, &address);
 }

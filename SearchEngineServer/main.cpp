@@ -32,8 +32,8 @@ public:
     ConnectionHandler(wqueue<WorkItem*>& queue) : m_queue(queue) {}
     
     void* run() {
-        // Remove 1 item at a time and process it. Blocks if no items are
-        // available to process.
+        
+        // 从任务队列中移除一个任务来执行。
         for (int i = 0;; i++) {
             printf("thread %lu, loop %d - waiting for item...\n",
                    (long unsigned int)self(), i);
@@ -42,20 +42,29 @@ public:
                    (long unsigned int)self(), i);
             TCPStream* stream = item->getStream();
             
-            // Echo messages back the client until the connection is
-            // closed
-            char input[256];
-            int len;
-            while ((len = stream->receive(input, sizeof(input)-1)) > 0 ){
-                input[len] = NULL;
-                stream->send(input, len);
-                printf("thread %lu, echoed '%s' back to the client\n",
-                       (long unsigned int)self(), input);
+            // 处理接收到的信息。
+            char input[25600]; // 视你要传输的数据的大小，改一下缓存。
+            stream->receive(input, sizeof(input)-1);
+            
+            // 在此处对input进行预处理，先判断是UPDATE还是QUERY，再根据后面的DATA进行操作。
+            bool isUpdate = true;
+            if (isUpdate) {
+                // 对数据库进行更新操作。
+                // Do something here.
+                // 将数据库是否更新成功的信息返回给客户端。
+                char err[] = "SUCCEED(or FAILED)";
+                stream->send(err, sizeof(err));
+            } else {
+                // 对数据库进行查询操作。
+                // Do something here.
+                // 将查询结果返回。
+                char result[] = "RESULT";
+                stream->send(result, sizeof(result));
             }
+            
             delete item;
         }
         
-        // Should never get here
         return NULL;
     }
 };
@@ -66,7 +75,7 @@ int main(int argc, char** argv)
     string ip = "localhost"; // IP地址。
     int port = 9999; // 端口号。
     
-    // Create the queue and consumer (worker) threads
+    // 创建任务队列。
     wqueue<WorkItem*>  queue;
     for (int i = 0; i < workers; i++) {
         ConnectionHandler* handler = new ConnectionHandler(queue);
@@ -77,7 +86,7 @@ int main(int argc, char** argv)
         handler->start();
     }
     
-    // Create an acceptor then start listening for connections
+    // 开始监听。
     WorkItem* item;
     TCPAcceptor* connectionAcceptor;
     if (ip.length() > 0) {
@@ -91,7 +100,7 @@ int main(int argc, char** argv)
         exit(1);
     }
     
-    // Add a work item to the queue for each connection
+    // 如果创建了连接，则将连接加入到任务队列。
     while (1) {
         TCPStream* connection = connectionAcceptor->accept();
         if (!connection) {
@@ -106,6 +115,5 @@ int main(int argc, char** argv)
         queue.add(item);
     }
     
-    // Should never get here
     exit(0);
 }
