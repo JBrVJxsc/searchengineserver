@@ -62,17 +62,9 @@ public:
 
 int main(int argc, char** argv)
 {
-    // Process command line arguments
-    if ( argc < 3 || argc > 4 ) {
-        printf("usage: %s <workers> <port> <ip>\n", argv[0]);
-        exit(-1);
-    }
-    int workers = atoi(argv[1]);
-    int port = atoi(argv[2]);
-    string ip;
-    if (argc == 4) {
-        ip = argv[3];
-    }
+    int workers = 5; // 开五个线程处理客户端请求。
+    string ip = "localhost"; // IP地址。
+    int port = 9999; // 端口号。
     
     // Create the queue and consumer (worker) threads
     wqueue<WorkItem*>  queue;
