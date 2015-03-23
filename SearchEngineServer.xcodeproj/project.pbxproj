@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		95CE88471ABF379900FAA6BF /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95CE88461ABF379900FAA6BF /* main.cpp */; };
+		95CE884F1ABF90C600FAA6BF /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95CE884D1ABF90C600FAA6BF /* thread.cpp */; };
+		95CE88531ABF927100FAA6BF /* tcpstream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95CE88511ABF927100FAA6BF /* tcpstream.cpp */; };
+		95CE88561ABF92DF00FAA6BF /* tcpconnector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95CE88541ABF92DF00FAA6BF /* tcpconnector.cpp */; };
+		95CE88591ABF932700FAA6BF /* tcpacceptor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95CE88571ABF932700FAA6BF /* tcpacceptor.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +29,15 @@
 /* Begin PBXFileReference section */
 		95CE88431ABF379900FAA6BF /* SearchEngineServer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SearchEngineServer; sourceTree = BUILT_PRODUCTS_DIR; };
 		95CE88461ABF379900FAA6BF /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		95CE884D1ABF90C600FAA6BF /* thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = thread.cpp; sourceTree = "<group>"; };
+		95CE884E1ABF90C600FAA6BF /* thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = thread.h; sourceTree = "<group>"; };
+		95CE88501ABF916400FAA6BF /* wqueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = wqueue.h; sourceTree = "<group>"; };
+		95CE88511ABF927100FAA6BF /* tcpstream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tcpstream.cpp; sourceTree = "<group>"; };
+		95CE88521ABF927100FAA6BF /* tcpstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tcpstream.h; sourceTree = "<group>"; };
+		95CE88541ABF92DF00FAA6BF /* tcpconnector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tcpconnector.cpp; sourceTree = "<group>"; };
+		95CE88551ABF92DF00FAA6BF /* tcpconnector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tcpconnector.h; sourceTree = "<group>"; };
+		95CE88571ABF932700FAA6BF /* tcpacceptor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tcpacceptor.cpp; sourceTree = "<group>"; };
+		95CE88581ABF932700FAA6BF /* tcpacceptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tcpacceptor.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +71,15 @@
 			isa = PBXGroup;
 			children = (
 				95CE88461ABF379900FAA6BF /* main.cpp */,
+				95CE884D1ABF90C600FAA6BF /* thread.cpp */,
+				95CE884E1ABF90C600FAA6BF /* thread.h */,
+				95CE88501ABF916400FAA6BF /* wqueue.h */,
+				95CE88511ABF927100FAA6BF /* tcpstream.cpp */,
+				95CE88521ABF927100FAA6BF /* tcpstream.h */,
+				95CE88541ABF92DF00FAA6BF /* tcpconnector.cpp */,
+				95CE88551ABF92DF00FAA6BF /* tcpconnector.h */,
+				95CE88571ABF932700FAA6BF /* tcpacceptor.cpp */,
+				95CE88581ABF932700FAA6BF /* tcpacceptor.h */,
 			);
 			path = SearchEngineServer;
 			sourceTree = "<group>";
@@ -118,7 +140,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				95CE88591ABF932700FAA6BF /* tcpacceptor.cpp in Sources */,
+				95CE88531ABF927100FAA6BF /* tcpstream.cpp in Sources */,
 				95CE88471ABF379900FAA6BF /* main.cpp in Sources */,
+				95CE884F1ABF90C600FAA6BF /* thread.cpp in Sources */,
+				95CE88561ABF92DF00FAA6BF /* tcpconnector.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -232,6 +258,7 @@
 				95CE884C1ABF379900FAA6BF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
