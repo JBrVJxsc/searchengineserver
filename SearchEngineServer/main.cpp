@@ -6,12 +6,20 @@
 //  Copyright (c) 2015 Xu ZHANG. All rights reserved.
 //
 
+
+#define BUFFERSIZE 256
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include "thread.h"
 #include "wqueue.h"
 #include "tcpacceptor.h"
+
+#include <flann/flann.hpp>
+#include <flann/io/hdf5.h>
+
+using namespace flann;
 
 class WorkItem
 {
@@ -27,39 +35,86 @@ public:
 class ConnectionHandler : public Thread
 {
     wqueue<WorkItem*>& m_queue;
+    Index<L2<float> >& index;
+    int nn;
+    
+    Matrix<float> *newpoints;
     
 public:
-    ConnectionHandler(wqueue<WorkItem*>& queue) : m_queue(queue) {}
+    ConnectionHandler(wqueue<WorkItem*>& queue, int nn, Index<L2<float> >& index) : m_queue(queue), nn(nn), index(index) {}
     
     void* run() {
         
-        // 从任务队列中移除一个任务来执行。
+        // Remove a task from the task queue
         for (int i = 0;; i++) {
-            printf("thread %lu, loop %d - waiting for item...\n",
+            printf("thread %lu, loop %d - waiting for client...\n",
                    (long unsigned int)self(), i);
             WorkItem* item = m_queue.remove();
-            printf("thread %lu, loop %d - got one item\n",
-                   (long unsigned int)self(), i);
+            printf("thread %lu, loop %d - got one client\n", (long unsigned int)self(), i);
             TCPStream* stream = item->getStream();
             
-            // 处理接收到的信息。
-            char input[25600]; // 视你要传输的数据的大小，改一下缓存。
-            stream->receive(input, sizeof(input)-1);
             
-            // 在此处对input进行预处理，先判断是UPDATE还是QUERY，再根据后面的DATA进行操作。
-            bool isUpdate = true;
+            // handle the received message
+            char input[25600]; // buffer for transfer data
+            stream->receive(input, sizeof(input)-1);
+            printf("thread %lu, receive: %s\n", (long unsigned int)self(), input);
+            
+            string s(input);
+            bool isUpdate = false;
+            bool isQuery = false;
+            
+            if (s.find_first_of("UPDATE")==0)
+            {
+                isUpdate = true;
+                printf("thread %lu, UPDATE\n",(long unsigned int)self());
+            }
+            else if(s.find_first_of("QUERY")==0)
+            {
+                isQuery = true;
+                printf("thread %lu, QUERY\n",(long unsigned int)self());
+            }
+            
+            
+            // preprocess the input, judge is UPDATE or QUERY，and then do with data
             if (isUpdate) {
-                // 对数据库进行更新操作。
-                // Do something here.
-                // 将数据库是否更新成功的信息返回给客户端。
-                char err[] = "SUCCEED(or FAILED)";
+                // update index with queries
+                Matrix<float> newpoint;
+                string filequery = s.substr(7);
+                load_from_file(newpoint, filequery, "query");
+                
+                index.addPoints(newpoint,2); //add new points and rebuild the index.
+                string fileindex = "index.idx";
+                index.save(fileindex);
+                
+                // Determine whether the update was successful，and return the information（successed or failed） to client
+                char err[] = "UPDATE SUCCEED";
                 stream->send(err, sizeof(err));
-            } else {
-                // 对数据库进行查询操作。
-                // Do something here.
-                // 将查询结果返回。
-                char result[] = "RESULT";
+            }
+            else if(isQuery){
+                
+                //search with a  query
+                Matrix<float> query;
+                string filequery = s.substr(6);
+                load_from_file(query, filequery, "query");
+                printf("thread %lu, file: %s\n",(long unsigned int)self(), filequery.c_str());
+                
+                Matrix<int> indices(new int[query.rows*nn], query.rows, nn);
+                Matrix<float> dists(new float[query.rows*nn], query.rows, nn);
+                index.knnSearch(query, indices, dists, nn, flann::SearchParams(128));
+                
+                //save results
+                char fileresult[] = "result.hdf5";
+                flann::save_to_file(indices,fileresult,"result");
+                
+                //prepare filename of the results
+                char resulttitle[] = "RESULT";
+                int len = strlen(resulttitle)+strlen(fileresult)+BUFFERSIZE;
+                char * result = (char *)malloc(len);
+                snprintf(result, len, "%s %s", resulttitle, fileresult);
+                
+                //send the results file name
                 stream->send(result, sizeof(result));
+                
             }
             
             delete item;
@@ -69,16 +124,29 @@ public:
     }
 };
 
+
+
 int main(int argc, char** argv)
 {
-    int workers = 5; // 开五个线程处理客户端请求。
-    string ip = "localhost"; // IP地址。
-    int port = 9999; // 端口号。
+    int workers = 2; // Five thread to handle users' request
+    string ip = "localhost"; // IP
+    int port = 9999; // port
     
-    // 创建任务队列。
+    
+    //index and data prepare
+    int nn = 3; //near neighbor.
+    Matrix<float> dataset;
+    load_from_file(dataset, "dataset.hdf5","dataset");
+    Index<L2<float> > index(dataset, flann::KDTreeIndexParams(4));
+    index.buildIndex();
+    
+    //or we can load index by
+    //flann::Index<L2<float> > index(dataset, flann::SavedIndexParams("index"));
+    
+    // Task queue
     wqueue<WorkItem*>  queue;
     for (int i = 0; i < workers; i++) {
-        ConnectionHandler* handler = new ConnectionHandler(queue);
+        ConnectionHandler* handler = new ConnectionHandler(queue,nn,index);
         if (!handler) {
             printf("Could not create ConnectionHandler %d\n", i);
             exit(1);
@@ -86,7 +154,7 @@ int main(int argc, char** argv)
         handler->start();
     }
     
-    // 开始监听。
+    // Listen
     WorkItem* item;
     TCPAcceptor* connectionAcceptor;
     if (ip.length() > 0) {
@@ -100,7 +168,7 @@ int main(int argc, char** argv)
         exit(1);
     }
     
-    // 如果创建了连接，则将连接加入到任务队列。
+    // If new connection, add the connection into task queue.
     while (1) {
         TCPStream* connection = connectionAcceptor->accept();
         if (!connection) {
